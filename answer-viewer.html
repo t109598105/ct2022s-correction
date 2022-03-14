@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant-TW">
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@900&display=swap');
+
+        body {
+            background-color: rgba(255, 128, 255, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            border: 2px black solid;
+            font: 16px sans-serif;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 8px;
+        }
+
+        td,
+        th {
+            border: 1px black solid;
+            padding: 5px;
+            background-color: rgba(255, 255, 0, 0.1);
+        }
+
+        td img {
+            transition: width, height;
+            transition-duration: 0.5s;
+            /* width: 50px; */
+            height: 50px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        img:hover {
+            box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+        }
+
+        div {
+            margin: 16px auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table>
+    </table>
+
+    <div>
+        <input id="input-file" type="file">
+    </div>
+    <div id="apple-container" style="width: 90vw"></div>
+
+
+
+
+    <!-- 引用 d3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.7.1/d3.min.js"></script>
+    <script>
+
+        document.getElementById('input-file').onchange = function (evt) {
+            if (evt.target.files[0].name.split('.').slice(-1)[0] != 'csv') {
+                return console.error('The Input file is not a valid csv file');
+            }
+
+            var fr = new FileReader();
+            fr.onload = function () {
+                d3.csv(fr.result, function (data) {
+                    //document.getElementById('score-d3').innerHTML = JSON.stringify(data, null, 4);
+
+                    var title = {};
+
+                    for (var i = 0; i < data.columns.length; i++) {
+                        title[data.columns[i]] = data.columns[i];
+                    }
+
+                    data.unshift(title);
+
+                    var tr = d3.select('#apple-container')
+                        .append("table")
+                        .selectAll('tr')
+                        .data(data)
+                        .enter()
+                        .append('tr')
+                        ;
+
+                    tr
+                        .filter(function (d, i) {
+                            return i == 0;
+                        })
+                        .selectAll('td')
+                        .data(function (d) { return Object.keys(d).map(function (el) { return el; }); })
+                        .enter()
+                        .append('td')
+                        .text(function (d) { return d })
+                        ;
+
+                    tr
+                        .filter(function (d, i) {
+                            return i >= 1;
+                        })
+                        .selectAll('td')
+                        .data(function (d) { return Object.keys(d).map(function (el) { return d[el]; }); })
+                        .enter()
+                        .append('td')
+                        .text(function (d) {
+                            if (d == '正確') { return 'O'; }
+                            else if (d == '錯誤') { return 'X'; }
+
+                            
+
+                            if (d.indexOf('；') != -1) {
+                                var setArr = [];
+                                var dSplit = d.split('；');
+                                for (var i = 0; i < dSplit.length; i++) {
+                                    if (setArr.indexOf(dSplit[i]) == -1) {
+                                        setArr.push(dSplit[i]);
+                                    }
+                                }
+
+                                return setArr.join('；');
+                            }
+
+                            return d;
+                        })
+                        ;
+                });
+            };
+            fr.readAsDataURL(evt.target.files[0]);
+        };
+
+    </script>
+</body>
+
+</html>
